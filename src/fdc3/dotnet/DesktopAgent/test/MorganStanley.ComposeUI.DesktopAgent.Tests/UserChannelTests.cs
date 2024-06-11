@@ -14,13 +14,14 @@
 
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Contracts;
 using Finos.Fdc3.Context;
+using MorganStanley.ComposeUI.Fdc3.MorganStanley.ComposeUI.DesktopAgent.Infrastructure.Internal;
 
 namespace MorganStanley.ComposeUI.Fdc3.DesktopAgent.Tests;
 
 public class UserChannelTests
 {
     private const string TestChannel = "testChannel";
-    UserChannel _channel = new UserChannel(TestChannel, new Mock<IMessageRouter>().Object, null);
+    UserChannel _channel = new UserChannel(TestChannel, new Mock<IMessagingService>().Object, null);
     UserChannelTopics _topics = new UserChannelTopics(TestChannel);
 
     [Theory]
@@ -29,7 +30,7 @@ public class UserChannelTests
     public async void CallingGetCurrentContextOnNewUserChannelReturnsNull(string? contextType)
     {
         var request = new GetCurrentContextRequest() { ContextType = contextType };
-        var ctx = await _channel.GetCurrentContext(_topics.GetCurrentContext, MessageBuffer.Factory.CreateJson(request), null);
+        var ctx = await _channel.GetCurrentContext(_topics.GetCurrentContext, new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(request)), null);
         ctx.Should().BeNull();
     }
 
@@ -118,20 +119,20 @@ public class UserChannelTests
 
     private int _counter;
 
-    private MessageBuffer ContextType => MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Contact().Type });
-    private MessageBuffer OtherContextType => MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Email(null).Type });
-    private MessageBuffer GetContext() => MessageBuffer.Factory.CreateJson(new Contact(new ContactID() { Email = $"test{_counter}@test.org", FdsId = $"test{_counter++}" }, "Testy Tester"));
-    private MessageBuffer DifferentContextType => MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Currency().Type });
-    private MessageBuffer GetDifferentContext() => MessageBuffer.Factory.CreateJson(new Currency(new CurrencyID() { CURRENCY_ISOCODE = "HUF" }));
+    private IMessageBuffer ContextType => new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Contact().Type }));
+    private IMessageBuffer OtherContextType => new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Email(null).Type }));
+    private IMessageBuffer GetContext() => new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(new Contact(new ContactID() { Email = $"test{_counter}@test.org", FdsId = $"test{_counter++}" }, "Testy Tester")));
+    private IMessageBuffer DifferentContextType => new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(new GetCurrentContextRequest { ContextType = new Currency().Type }));
+    private IMessageBuffer GetDifferentContext() => new MessageBufferAdapter(MessageBuffer.Factory.CreateJson(new Currency(new CurrencyID() { CURRENCY_ISOCODE = "HUF" })));
 
-    private async ValueTask<MessageBuffer> PreBroadcastContext()
+    private async ValueTask<IMessageBuffer> PreBroadcastContext()
     {
         var context = GetContext();
         await _channel.HandleBroadcast(context);
         return context;
     }
 
-    private async ValueTask<MessageBuffer> DoubleBroadcastContext()
+    private async ValueTask<IMessageBuffer> DoubleBroadcastContext()
     {
         await _channel.HandleBroadcast(GetContext());
         var context = GetContext();
@@ -139,7 +140,7 @@ public class UserChannelTests
         return context;
     }
 
-    private async ValueTask<(MessageBuffer first, MessageBuffer second)> BroadcastDifferentContexts()
+    private async ValueTask<(IMessageBuffer first, IMessageBuffer second)> BroadcastDifferentContexts()
     {
         var first = GetContext();
         var second = GetDifferentContext();

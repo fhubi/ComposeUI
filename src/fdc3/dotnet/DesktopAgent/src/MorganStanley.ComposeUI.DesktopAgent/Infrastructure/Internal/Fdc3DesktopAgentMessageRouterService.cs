@@ -20,9 +20,9 @@ using Microsoft.Extensions.Options;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Contracts;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Converters;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.DependencyInjection;
-using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Exceptions;
 using MorganStanley.ComposeUI.Messaging;
 using Finos.Fdc3;
+using MorganStanley.ComposeUI.Fdc3.MorganStanley.ComposeUI.DesktopAgent.Infrastructure.Internal;
 
 namespace MorganStanley.ComposeUI.Fdc3.DesktopAgent.Infrastructure.Internal;
 
@@ -65,7 +65,7 @@ internal class Fdc3DesktopAgentMessageRouterService : IHostedService
 
     public async ValueTask<UserChannel> HandleAddUserChannel(string id)
     {
-        var userChannel = new UserChannel(id, _messageRouter, _loggerFactory.CreateLogger<UserChannel>());
+        var userChannel = new UserChannel(id, new MessageRouterAdapter(_messageRouter), _loggerFactory.CreateLogger<UserChannel>());
         await _desktopAgent.AddUserChannel(userChannel);
         return userChannel;
     }

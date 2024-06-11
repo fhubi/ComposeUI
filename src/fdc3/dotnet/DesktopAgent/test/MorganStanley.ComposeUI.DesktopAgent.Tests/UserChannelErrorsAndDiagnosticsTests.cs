@@ -13,6 +13,7 @@
  */
 
 using Microsoft.Extensions.Logging;
+using MorganStanley.ComposeUI.Fdc3.MorganStanley.ComposeUI.DesktopAgent.Infrastructure.Internal;
 
 namespace MorganStanley.ComposeUI.Fdc3.DesktopAgent.Tests;
 
@@ -51,7 +52,7 @@ public class UserChannelErrorsAndDiagnosticsTests
     public UserChannelErrorsAndDiagnosticsTests()
     {
         _logger = new TestLogger();
-        _channel = new UserChannel(TestChannel, new Mock<IMessageRouter>().Object, _logger);
+        _channel = new UserChannel(TestChannel, new Mock<IMessagingService>().Object, _logger);
     }
 
     [Fact]
@@ -91,9 +92,9 @@ public class UserChannelErrorsAndDiagnosticsTests
         VerifyDebugAndWarning();
     }
 
-    private MessageBuffer EmptyBuffer => MessageBuffer.Create(string.Empty);
-    private MessageBuffer PlainTextBuffer => MessageBuffer.Create("Plain Text Payload");
-    private MessageBuffer InvalidJsonBuffer => MessageBuffer.Create("{\"randomField\":\"random text\"}");
+    private IMessageBuffer EmptyBuffer => new MessageBufferAdapter(MessageBuffer.Create(string.Empty));
+    private IMessageBuffer PlainTextBuffer => new MessageBufferAdapter(MessageBuffer.Create("Plain Text Payload"));
+    private IMessageBuffer InvalidJsonBuffer => new MessageBufferAdapter(MessageBuffer.Create("{\"randomField\":\"random text\"}"));
 
     private void VerifyDebugAndWarning()
     {

@@ -24,6 +24,7 @@ using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Exceptions;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Infrastructure.Internal;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Tests.Helpers;
 using MorganStanley.ComposeUI.Fdc3.DesktopAgent.Tests.TestUtils;
+using MorganStanley.ComposeUI.Fdc3.MorganStanley.ComposeUI.DesktopAgent.Infrastructure.Internal;
 using MorganStanley.ComposeUI.ModuleLoader;
 using AppIdentifier = MorganStanley.ComposeUI.Fdc3.DesktopAgent.Protocol.AppIdentifier;
 using AppIntent = MorganStanley.ComposeUI.Fdc3.DesktopAgent.Protocol.AppIntent;
@@ -66,7 +67,7 @@ public class Fdc3DesktopAgentTests : IAsyncLifetime
     [Fact]
     public async Task AddUserChannel_wont_throw_and_adds_channel()
     {
-        var mockMessageService = new Mock<IMessageRouter>();
+        var mockMessageService = new Mock<IMessagingService>();
         mockMessageService.Setup(_ => _.ConnectAsync(It.IsAny<CancellationToken>()))
             .Returns((CancellationToken cancellationToken) => ValueTask.CompletedTask);
 
@@ -92,7 +93,7 @@ public class Fdc3DesktopAgentTests : IAsyncLifetime
     [Fact]
     public async Task FindChannel_returns_true()
     {
-        var mockMessageService = new Mock<IMessageRouter>();
+        var mockMessageService = new Mock<IMessagingService>();
         mockMessageService.Setup(_ => _.ConnectAsync(It.IsAny<CancellationToken>()))
             .Returns((CancellationToken cancellationToken) => ValueTask.CompletedTask);
 
