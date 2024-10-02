@@ -16,6 +16,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls.Ribbon;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MorganStanley.ComposeUI.LayoutPersistence.Abstractions;
 using MorganStanley.ComposeUI.ModuleLoader;
 using MorganStanley.ComposeUI.Shell.ImageSource;
 using MorganStanley.ComposeUI.Shell.Utilities;
@@ -30,14 +31,17 @@ public partial class MainWindow : RibbonWindow
     private readonly IModuleLoader _moduleLoader;
     private readonly IModuleCatalog _moduleCatalog;
     private readonly ImageSourceProvider _iconProvider;
+    private readonly ILayoutPersistence<string> _layoutPersistence;
 
     public MainWindow(
         IModuleCatalog moduleCatalog,
         IModuleLoader moduleLoader,
+        ILayoutPersistence<string> layoutPersistence,
         IImageSourcePolicy? imageSourcePolicy = null)
     {
         _moduleCatalog = moduleCatalog;
         _moduleLoader = moduleLoader;
+        _layoutPersistence = layoutPersistence;
         _iconProvider = new ImageSourceProvider(imageSourcePolicy ?? new DefaultImageSourcePolicy());
 
         InitializeComponent();
@@ -130,5 +134,17 @@ public partial class MainWindow : RibbonWindow
         public IModuleManifest Manifest { get; }
 
         public System.Windows.Media.ImageSource? ImageSource { get; }
+    }
+
+    private async void LoadLayout_Click(object sender, RoutedEventArgs e)
+    {
+        var layout = await _layoutPersistence.LoadLayoutAsync("layout");
+        _xamDockManager.LoadLayout(layout);
+    }
+
+    private async void SaveLayout_Click(object sender, RoutedEventArgs e)
+    {
+        var layout = _xamDockManager.SaveLayout();
+        await _layoutPersistence.SaveLayoutAsync("layout", layout);
     }
 }
