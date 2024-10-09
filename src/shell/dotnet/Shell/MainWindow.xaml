@@ -63,6 +63,7 @@ See the License for the specific language governing permissions and limitations 
                                    AllowMaximizeFloatingWindows="True"
                                    AllowMinimizeFloatingWindows="True"
                                    ShowFloatingWindowsInTaskbar="True"
+                                   InitializePaneContent="XamDockManager_InitializePaneContent"
                                    LayoutMode="FillContainer">
                 <igDock:XamDockManager.Panes>
                     <igDock:SplitPane x:Name="_verticalSplit" SplitterOrientation="Vertical" igDock:XamDockManager.InitialLocation="DockedLeft" />

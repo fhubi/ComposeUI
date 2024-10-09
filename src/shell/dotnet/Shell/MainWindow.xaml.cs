@@ -13,9 +13,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Ribbon;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Infragistics.Windows.DockManager;
 using MorganStanley.ComposeUI.LayoutPersistence.Abstractions;
 using MorganStanley.ComposeUI.ModuleLoader;
 using MorganStanley.ComposeUI.Shell.ImageSource;
@@ -136,9 +139,13 @@ public partial class MainWindow : RibbonWindow
         public System.Windows.Media.ImageSource? ImageSource { get; }
     }
 
+    private Dictionary<string, WebWindowOptions> _windowContent;
+
     private async void LoadLayout_Click(object sender, RoutedEventArgs e)
     {
         var layout = await _layoutPersistence.LoadLayoutAsync("layout");
+        var content = await _layoutPersistence.LoadLayoutAsync("content");
+        _windowContent = JsonSerializer.Deserialize<Dictionary<string, WebWindowOptions>>(content);
         _xamDockManager.LoadLayout(layout);
     }
 
@@ -146,5 +153,28 @@ public partial class MainWindow : RibbonWindow
     {
         var layout = _xamDockManager.SaveLayout();
         await _layoutPersistence.SaveLayoutAsync("layout", layout);
+        await SaveContentAsync();
+    }
+
+    private async Task SaveContentAsync()
+    {
+        Dictionary<string, WebWindowOptions> panes = new Dictionary<string, WebWindowOptions>();
+        foreach (var pane in _xamDockManager.GetPanes(PaneNavigationOrder.VisibleOrder))
+        {
+            if (pane is WebContentPane)
+            {
+                var options = ((WebContentPane)pane).WebContent.Options;
+                options.Title = (string)pane.Header;
+                panes.Add(pane.SerializationId, options);
+            }
+        }
+
+        await _layoutPersistence.SaveLayoutAsync("content", JsonSerializer.Serialize(panes));
+    }
+
+    private void XamDockManager_InitializePaneContent(object sender, Infragistics.Windows.DockManager.Events.InitializePaneContentEventArgs e)
+    {
+        var id = e.NewPane.SerializationId;
+        e.NewPane = new WebContentPane(new WebContent(_windowContent[id], _moduleLoader), _moduleLoader);
     }
 }
