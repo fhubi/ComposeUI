@@ -140,12 +140,15 @@ public partial class MainWindow : RibbonWindow
     }
 
     private Dictionary<string, WebWindowOptions> _windowContent;
+    private Dictionary<string, List<string>> _injectedScripts;
 
     private async void LoadLayout_Click(object sender, RoutedEventArgs e)
     {
         var layout = await _layoutPersistence.LoadLayoutAsync("layout");
         var content = await _layoutPersistence.LoadLayoutAsync("content");
+        var scripts = await _layoutPersistence.LoadLayoutAsync("scripts");
         _windowContent = JsonSerializer.Deserialize<Dictionary<string, WebWindowOptions>>(content);
+        _injectedScripts = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(scripts);
         _xamDockManager.LoadLayout(layout);
     }
 
@@ -159,22 +162,33 @@ public partial class MainWindow : RibbonWindow
     private async Task SaveContentAsync()
     {
         Dictionary<string, WebWindowOptions> panes = new Dictionary<string, WebWindowOptions>();
+        Dictionary<string, List<string>> injectedScripts = new Dictionary<string, List<string>>();
+
         foreach (var pane in _xamDockManager.GetPanes(PaneNavigationOrder.VisibleOrder))
         {
             if (pane is WebContentPane)
             {
                 var options = ((WebContentPane)pane).WebContent.Options;
+                var scripts = ((WebContentPane) pane).WebContent.InjectedScripts;
                 options.Title = (string)pane.Header;
                 panes.Add(pane.SerializationId, options);
+                injectedScripts.Add(pane.SerializationId, scripts);
             }
         }
 
         await _layoutPersistence.SaveLayoutAsync("content", JsonSerializer.Serialize(panes));
+        await _layoutPersistence.SaveLayoutAsync("scripts", JsonSerializer.Serialize(injectedScripts));
     }
 
     private void XamDockManager_InitializePaneContent(object sender, Infragistics.Windows.DockManager.Events.InitializePaneContentEventArgs e)
     {
         var id = e.NewPane.SerializationId;
-        e.NewPane = new WebContentPane(new WebContent(_windowContent[id], _moduleLoader), _moduleLoader);
+        var webContent = new WebContent(_windowContent[id], _moduleLoader)
+        {
+            InjectedScripts = _injectedScripts[id]
+        };
+
+        e.NewPane = new WebContentPane(webContent, _moduleLoader);
+
     }
 }

@@ -79,6 +79,8 @@ public partial class WebContent : ContentPresenter, IDisposable
 
     public string Title { get; private set; }
 
+    public List<string> InjectedScripts;
+
     public System.Windows.Media.ImageSource? Icon { get; private set; }
 
     private readonly IModuleLoader _moduleLoader;
@@ -171,6 +173,14 @@ public partial class WebContent : ContentPresenter, IDisposable
 
         _scriptsInjected = true;
         var webProperties = _moduleInstance?.GetProperties().OfType<WebStartupProperties>().FirstOrDefault();
+        
+        InjectedScripts ??= new();
+
+        foreach (var script in InjectedScripts)
+        {
+            var s = await coreWebView.AddScriptToExecuteOnDocumentCreatedAsync(script);
+            Console.WriteLine(s);
+        }
 
         if (webProperties != null)
         {
@@ -179,6 +189,7 @@ public partial class WebContent : ContentPresenter, IDisposable
                     async scriptProvider =>
                     {
                         var script = await scriptProvider(_moduleInstance!);
+                        InjectedScripts.Add(script);
                         await coreWebView.AddScriptToExecuteOnDocumentCreatedAsync(script);
                     }));
         }
